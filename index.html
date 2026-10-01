@@ -13,13 +13,18 @@
       <h1>Weather Explorer</h1>
       <div class="search-box">
         <input type="text" id="city-input" placeholder="Enter city name...">
-        <button id="search-btn">Get Weather</button>
+        <button id="search-btn">Search</button>
       </div>
+      
+      <!-- Navigation Between Endpoints -->
+      <nav class="endpoint-nav" id="endpoint-nav" style="display: none;">
+        <button class="nav-tab active" data-view="location">Location Endpoint</button>
+        <button class="nav-tab" data-view="weather">Weather Endpoint</button>
+      </nav>
     </header>
 
     <main class="app-main">
-      <div id="location-container"></div>
-      <div id="weather-container"></div>
+      <div id="view-container"></div>
     </main>
   </div>
 
