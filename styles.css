@@ -1,0 +1,104 @@
+/* Custom Palette & Typography */
+body {
+  font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+  background-color: #000000; /* Black */
+  color: #ffffff; /* White */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.app-wrapper {
+  background-color: #0a1f1f; /* Deep dark teal backdrop */
+  border: 2px solid #005c5c; /* Darker teal border */
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 128, 128, 0.2);
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.app-header h1 {
+  color: #7fffd4; /* Light aqua */
+  font-size: 2.2em;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.search-box {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+input[type="text"] {
+  padding: 12px 14px;
+  font-size: 0.95em;
+  font-family: "Century Gothic", CenturyGothic, sans-serif;
+  border: 1px solid #008b8b; /* Darker teal */
+  border-radius: 6px;
+  background-color: #000000; /* Black */
+  color: #ffffff;
+  flex: 1;
+}
+
+input[type="text"]::placeholder {
+  color: #739e9e;
+}
+
+button {
+  padding: 12px 18px;
+  font-size: 0.95em;
+  font-family: "Century Gothic", CenturyGothic, sans-serif;
+  background-color: #d97743; /* Pastel burnt-orange */
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #e58b59; /* Lighter pastel burnt-orange hover */
+}
+
+#location-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#location-container h2 {
+  color: #7fffd4; /* Light aqua */
+  margin-bottom: 5px;
+}
+
+.weather-card {
+  background: #000000; /* Black card base */
+  border: 2px solid #008b8b; /* Darker teal frame */
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.temperature {
+  font-size: 3.5em;
+  margin: 10px 0;
+  color: #d97743; /* Pastel burnt-orange accent for temperature */
+  font-weight: bold;
+}
+
+p {
+  color: #ffffff;
+  margin: 8px 0;
+}
