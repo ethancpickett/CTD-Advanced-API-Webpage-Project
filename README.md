@@ -1,29 +1,21 @@
 # Weather Explorer
 
-A multi-view web application built with vanilla HTML, CSS, and JavaScript that fetches real-time meteorological data using the Open-Meteo public API.
+A multi-view web application built with vanilla HTML, CSS, and JavaScript that interacts with the Open-Meteo public APIs.
 
 ## Project Overview
-This project was developed as part of the Code the Dream Advanced Pre-Work assignment. It demonstrates asynchronous JavaScript operations, DOM manipulation, defensive error handling, and multi-endpoint API integration without requiring authentication keys.
+Developed as part of the Code the Dream Advanced Pre-Work assignment, this application allows users to search for any city to view its geographic coordinates and live weather conditions through a responsive, custom-styled multi-view interface.
 
 ## API Endpoints Used
-1. **Open-Meteo Geocoding API**: Converts a user-submitted city name into precise geographical coordinates (`latitude` and `longitude`).
-   - *Endpoint:* `https://geocoding-api.open-meteo.com/v1/search?name={cityName}`
-2. **Open-Meteo Forecast API**: Retrieves live weather conditions based on the coordinates returned from the first endpoint.
-   - *Endpoint:* `https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true`
+1. **Open-Meteo Geocoding API**: (`/v1/search`) Converts a user-submitted city name into precise geographical coordinates (`latitude` and `longitude`).
+2. **Open-Meteo Forecast API**: (`/v1/forecast`) Retrieves live meteorological conditions (temperature, wind speed) based on the fetched coordinates.
 
 ## Features
-* Clean, responsive user interface designed with a modern dark theme.
-* Dual-fetch data architecture chaining dependent API requests.
-* Robust error handling for invalid city queries or failed network requests.
-* Event listeners supporting both button clicks and keyboard "Enter" submissions.
+* **Multi-View Navigation:** Seamlessly switch between the Location endpoint view and the Weather endpoint view without reloading the page.
+* **Unit Toggle:** Instantly toggle temperature display between Celsius (°C) and Fahrenheit (°F) with a real-time math conversion.
+* **Custom Styling:** Designed using a custom color palette (light aqua, darker teal, pastel burnt-orange, black) and Century Gothic typography.
+* **Error Handling:** Gracefully catches and displays error messages if a city cannot be found or if network connections fail.
 
-## Technologies Used
-* HTML5
-* CSS3
-* JavaScript (ES6+ Async/Await, Fetch API)
-* Open-Meteo Public APIs
-
-## How to Run Locally
+## How to Run the Webpage Locally
 1. Clone or download this repository to your local machine.
-2. Open the project folder in your preferred code editor (such as VS Code).
-3. Open `index.html` in any modern web browser to view and test the application.
+2. Open the project folder in your code editor (such as VS Code).
+3. Open `index.html` directly in any modern web browser (Chrome, Firefox, Safari, Edge), or use a live server extension like **Live Server** in VS Code to view and test the app.
