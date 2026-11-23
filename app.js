@@ -13,8 +13,8 @@ let appData = {
   isFahrenheit: false
 };
 
-// US State Abbreviation Lookup (allows both "VA" and "Virginia")
-const US_STATES = {
+// US State & Territory Abbreviation Lookup (supports both abbreviations and full names)
+const US_STATES_AND_TERRITORIES = {
   AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
   CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
   HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
@@ -25,20 +25,28 @@ const US_STATES = {
   OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
   SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
   VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
-  DC: 'District of Columbia'
+  DC: 'District of Columbia',
+  AS: 'American Samoa', GU: 'Guam', MP: 'Northern Mariana Islands',
+  PR: 'Puerto Rico', VI: 'U.S. Virgin Islands'
 };
+
+// Display a flagged validation/status message
+function showFlaggedMessage(message) {
+  endpointNav.style.display = 'none';
+  viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">🚩 ${message}</p>`;
+}
 
 // Helper to parse "City, State" input
 function parseLocationInput(rawInput) {
+  const hasComma = rawInput.includes(',');
   const parts = rawInput.split(',').map(part => part.trim()).filter(Boolean);
   const city = parts[0] || '';
   const rawState = parts[1] || '';
 
-  // Expand 2-letter US state code if applicable, otherwise keep raw string (supports international regions too)
   const upperState = rawState.toUpperCase();
-  const normalizedState = US_STATES[upperState] || rawState;
+  const normalizedState = US_STATES_AND_TERRITORIES[upperState] || rawState;
 
-  return { city, rawState, normalizedState };
+  return { city, rawState, normalizedState, hasComma };
 }
 
 // Helper to format location consistently as "City, State"
@@ -49,43 +57,40 @@ function formatCityState(loc) {
 
 // Main function executing the dual-fetch architecture
 async function fetchWeather(rawQuery) {
-  const { city, rawState, normalizedState } = parseLocationInput(rawQuery);
+  const { city, rawState, normalizedState, hasComma } = parseLocationInput(rawQuery);
 
   if (!city) return;
 
+  // Require a state or territory when no state/territory is provided
+  if (!hasComma || !rawState) {
+    showFlaggedMessage('Please, specify a state or territory.');
+    return;
+  }
+
   try {
-    // ENDPOINT 1: Open-Meteo Geocoding API (fetch up to 25 candidates to filter by state)
+    // ENDPOINT 1: Open-Meteo Geocoding API (fetch up to 25 candidates to filter by state/territory)
     const geoResponse = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=25&format=json`
     );
     const geoData = await geoResponse.json();
 
     if (!geoData.results || geoData.results.length === 0) {
-      endpointNav.style.display = 'none';
-      viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">City not found. Please use the format: City, State</p>`;
+      showFlaggedMessage(`City "${city}" not found. Please use the format: City, State.`);
       return;
     }
 
-    let matchedLocation = null;
+    const targetState = normalizedState.toLowerCase();
+    const targetRaw = rawState.toLowerCase();
 
-    if (normalizedState) {
-      const targetState = normalizedState.toLowerCase();
-      const targetRaw = rawState.toLowerCase();
+    const matchedLocation = geoData.results.find(item => {
+      const admin1 = (item.admin1 || '').toLowerCase();
+      const country = (item.country || '').toLowerCase();
+      return admin1 === targetState || admin1 === targetRaw || country === targetState || country === targetRaw;
+    });
 
-      matchedLocation = geoData.results.find(item => {
-        const admin1 = (item.admin1 || '').toLowerCase();
-        const country = (item.country || '').toLowerCase();
-        return admin1 === targetState || admin1 === targetRaw || country === targetState;
-      });
-
-      if (!matchedLocation) {
-        endpointNav.style.display = 'none';
-        viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">Could not find "${city}" in "${rawState}". Check spelling or state code.</p>`;
-        return;
-      }
-    } else {
-      // Fallback if user omits the comma and state
-      matchedLocation = geoData.results[0];
+    if (!matchedLocation) {
+      showFlaggedMessage(`Could not find "${city}" in "${rawState}". Please, specify a state or territory.`);
+      return;
     }
 
     appData.location = matchedLocation;
@@ -104,8 +109,7 @@ async function fetchWeather(rawQuery) {
 
   } catch (error) {
     console.error('Error fetching data:', error);
-    endpointNav.style.display = 'none';
-    viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">An error occurred while connecting to APIs.</p>`;
+    showFlaggedMessage('An error occurred while connecting to APIs.');
   }
 }
 
