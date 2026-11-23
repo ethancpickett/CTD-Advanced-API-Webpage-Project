@@ -1,190 +1,144 @@
-// Grab DOM elements
-const searchBtn = document.getElementById('search-btn');
-const cityInput = document.getElementById('city-input');
-const endpointNav = document.getElementById('endpoint-nav');
-const viewContainer = document.getElementById('view-container');
-const navTabs = document.querySelectorAll('.nav-tab');
-
-// Application State Store
-let appData = {
-  location: null,
-  weather: null,
-  currentView: 'location', // 'location' or 'weather'
-  isFahrenheit: false
-};
-
-// US State & Territory Abbreviation Lookup (supports both abbreviations and full names)
-const US_STATES_AND_TERRITORIES = {
-  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
-  CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
-  HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
-  KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
-  MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri',
-  MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
-  NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio',
-  OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
-  SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
-  VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
-  DC: 'District of Columbia',
-  AS: 'American Samoa', GU: 'Guam', MP: 'Northern Mariana Islands',
-  PR: 'Puerto Rico', VI: 'U.S. Virgin Islands'
-};
-
-// Display a flagged validation/status message
-function showFlaggedMessage(message) {
-  endpointNav.style.display = 'none';
-  viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">🚩 ${message}</p>`;
+/* Custom Palette & Typography */
+body {
+  font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+  background-color: #000000;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
-// Helper to parse "City, State" input
-function parseLocationInput(rawInput) {
-  const hasComma = rawInput.includes(',');
-  const parts = rawInput.split(',').map(part => part.trim()).filter(Boolean);
-  const city = parts[0] || '';
-  const rawState = parts[1] || '';
-
-  const upperState = rawState.toUpperCase();
-  const normalizedState = US_STATES_AND_TERRITORIES[upperState] || rawState;
-
-  return { city, rawState, normalizedState, hasComma };
+.app-wrapper {
+  background-color: #0a1f1f;
+  border: 2px solid #005c5c;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 128, 128, 0.2);
+  width: 100%;
+  max-width: 450px;
+  box-sizing: border-box;
 }
 
-// Helper to format location consistently as "City, State"
-function formatCityState(loc) {
-  const region = loc.admin1 || loc.country;
-  return region ? `${loc.name}, ${region}` : loc.name;
+.app-header {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-// Main function executing the dual-fetch architecture
-async function fetchWeather(rawQuery) {
-  const { city, rawState, normalizedState, hasComma } = parseLocationInput(rawQuery);
-
-  if (!city) return;
-
-  // Require a state or territory when no state/territory is provided
-  if (!hasComma || !rawState) {
-    showFlaggedMessage('Please specify a state or territory.');
-    return;
-  }
-
-  try {
-    // ENDPOINT 1: Open-Meteo Geocoding API (fetch up to 25 candidates to filter by state/territory)
-    const geoResponse = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=25&format=json`
-    );
-    const geoData = await geoResponse.json();
-
-    if (!geoData.results || geoData.results.length === 0) {
-      showFlaggedMessage(`City "${city}" not found. Please use the format: City, State.`);
-      return;
-    }
-
-    const targetState = normalizedState.toLowerCase();
-    const targetRaw = rawState.toLowerCase();
-
-    const matchedLocation = geoData.results.find(item => {
-      const admin1 = (item.admin1 || '').toLowerCase();
-      const country = (item.country || '').toLowerCase();
-      return admin1 === targetState || admin1 === targetRaw || country === targetState || country === targetRaw;
-    });
-
-    if (!matchedLocation) {
-      showFlaggedMessage(`Could not find "${city}" in "${rawState}". Please check the state or territory.`);
-      return;
-    }
-
-    appData.location = matchedLocation;
-
-    // ENDPOINT 2: Open-Meteo Forecast API
-    const weatherResponse = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${appData.location.latitude}&longitude=${appData.location.longitude}&current_weather=true`
-    );
-    const weatherData = await weatherResponse.json();
-
-    appData.weather = weatherData.current_weather;
-
-    // Show navigation tabs and render current view
-    endpointNav.style.display = 'flex';
-    renderView();
-
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    showFlaggedMessage('An error occurred while connecting to APIs.');
-  }
+.app-header h1 {
+  color: #7fffd4;
+  font-size: 2em;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
 }
 
-// Render UI based on active tab state
-function renderView() {
-  if (!appData.location) return;
-
-  const loc = appData.location;
-  const formattedTitle = formatCityState(loc);
-
-  if (appData.currentView === 'location') {
-    viewContainer.innerHTML = `
-      <div class="card">
-        <h2 style="color: #7fffd4; margin-top: 0;">📍 Location Endpoint</h2>
-        <h3>${formattedTitle}</h3>
-        <p><strong>Latitude:</strong> ${loc.latitude.toFixed(4)}</p>
-        <p><strong>Longitude:</strong> ${loc.longitude.toFixed(4)}</p>
-        <p><strong>Country:</strong> ${loc.country || 'N/A'}</p>
-        <p style="color: #739e9e; font-size: 0.8em; margin-top: 15px;">Source: Open-Meteo Geocoding API</p>
-      </div>
-    `;
-  } else if (appData.currentView === 'weather') {
-    let temp = appData.weather.temperature;
-    let unit = '°C';
-
-    if (appData.isFahrenheit) {
-      temp = (temp * 9/5) + 32;
-      unit = '°F';
-    }
-
-    viewContainer.innerHTML = `
-      <div class="card">
-        <h2 style="color: #7fffd4; margin-top: 0;">🌤️ Weather Endpoint</h2>
-        <h3>${formattedTitle}</h3>
-        <div class="temperature">${temp.toFixed(1)}${unit}</div>
-        <p>Wind Speed: <strong>${appData.weather.windspeed} km/h</strong></p>
-        <button class="toggle-btn" id="toggle-unit-btn">Switch to ${appData.isFahrenheit ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</button>
-        <p style="color: #739e9e; font-size: 0.8em; margin-top: 15px;">Source: Open-Meteo Forecast API</p>
-      </div>
-    `;
-
-    // Attach event listener for the unit toggle button
-    document.getElementById('toggle-unit-btn').addEventListener('click', () => {
-      appData.isFahrenheit = !appData.isFahrenheit;
-      renderView();
-    });
-  }
-
-  // Update active tab styling
-  navTabs.forEach(tab => {
-    if (tab.getAttribute('data-view') === appData.currentView) {
-      tab.classList.add('active');
-    } else {
-      tab.classList.remove('active');
-    }
-  });
+.search-box {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
 }
 
-// Event Listeners for Navigation Tabs
-navTabs.forEach(tab => {
-  tab.addEventListener('click', (e) => {
-    appData.currentView = e.target.getAttribute('data-view');
-    renderView();
-  });
-});
+input[type="text"] {
+  padding: 10px 14px;
+  font-size: 0.92em;
+  font-family: "Century Gothic", CenturyGothic, sans-serif;
+  border: 1px solid #008b8b;
+  border-radius: 6px;
+  background-color: #000000;
+  color: #ffffff;
+  flex: 1;
+  min-width: 0;
+}
 
-// Event Listeners for Search Actions
-searchBtn.addEventListener('click', () => {
-  const query = cityInput.value.trim();
-  if (query) fetchWeather(query);
-});
+input[type="text"]::placeholder {
+  color: #739e9e;
+}
 
-cityInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    const query = cityInput.value.trim();
-    if (query) fetchWeather(query);
-  }
-});
+button {
+  padding: 10px 16px;
+  font-size: 0.95em;
+  font-family: "Century Gothic", CenturyGothic, sans-serif;
+  background-color: #d97743;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+button:hover {
+  background-color: #e58b59;
+}
+
+/* Deep Red-Orange Search Button */
+#search-btn {
+  background-color: #c83e1b;
+}
+
+#search-btn:hover {
+  background-color: #e04820;
+}
+
+/* Endpoint Navigation Tabs */
+.endpoint-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  border-bottom: 1px solid #005c5c;
+  padding-bottom: 15px;
+}
+
+.nav-tab {
+  background-color: #000000;
+  border: 1px solid #008b8b;
+  color: #739e9e;
+  padding: 6px 12px;
+  font-size: 0.85em;
+  border-radius: 4px;
+}
+
+.nav-tab.active {
+  background-color: #008b8b;
+  color: #ffffff;
+  border-color: #7fffd4;
+}
+
+.card {
+  background: #000000;
+  border: 2px solid #008b8b;
+  padding: 25px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.temperature {
+  font-size: 3em;
+  margin: 10px 0;
+  color: #d97743;
+  font-weight: bold;
+}
+
+.toggle-btn {
+  background-color: #005c5c;
+  color: #7fffd4;
+  border: 1px solid #7fffd4;
+  margin-top: 15px;
+  padding: 6px 12px;
+  font-size: 0.85em;
+  border-radius: 4px;
+}
+
+.toggle-btn:hover {
+  background-color: #008b8b;
+}
+
+p {
+  color: #ffffff;
+  margin: 8px 0;
+}
