@@ -76,11 +76,23 @@ button:hover {
 
 /* Deep Red-Orange Search Button */
 #search-btn {
-  background-color: #c83e1b;
+  background-color: #b8290e;
+  color: #ffffff;
 }
 
 #search-btn:hover {
-  background-color: #e04820;
+  background-color: #d43515;
+}
+
+/* Flagged Message Box */
+.flag-box {
+  background-color: #1f0909;
+  border: 2px solid #ff5555;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  color: #ff7b7b;
+  font-weight: bold;
 }
 
 /* Endpoint Navigation Tabs */
