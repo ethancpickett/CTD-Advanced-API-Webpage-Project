@@ -13,7 +13,7 @@ let appData = {
   isFahrenheit: false
 };
 
-// US State & Territory Abbreviation Lookup (supports both abbreviations and full names)
+// US State & Territory Abbreviation Lookup
 const US_STATES_AND_TERRITORIES = {
   AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
   CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
@@ -30,13 +30,15 @@ const US_STATES_AND_TERRITORIES = {
   PR: 'Puerto Rico', VI: 'U.S. Virgin Islands'
 };
 
-// Display a flagged validation/status message
+// Show a flagged message box and clear any previous result
 function showFlaggedMessage(message) {
+  appData.location = null;
+  appData.weather = null;
   endpointNav.style.display = 'none';
-  viewContainer.innerHTML = `<p style="color: #ff5555; text-align: center;">🚩 ${message}</p>`;
+  viewContainer.innerHTML = `<div class="flag-box">🚩 ${message}</div>`;
 }
 
-// Helper to parse "City, State" input
+// Parse "City, State" input
 function parseLocationInput(rawInput) {
   const hasComma = rawInput.includes(',');
   const parts = rawInput.split(',').map(part => part.trim()).filter(Boolean);
@@ -49,7 +51,7 @@ function parseLocationInput(rawInput) {
   return { city, rawState, normalizedState, hasComma };
 }
 
-// Helper to format location consistently as "City, State"
+// Format location consistently as "City, State"
 function formatCityState(loc) {
   const region = loc.admin1 || loc.country;
   return region ? `${loc.name}, ${region}` : loc.name;
@@ -61,21 +63,21 @@ async function fetchWeather(rawQuery) {
 
   if (!city) return;
 
-  // Require a state or territory when no state/territory is provided
+  // Block search and show flag message when no state/territory is given
   if (!hasComma || !rawState) {
     showFlaggedMessage('Please, specify a state or territory.');
     return;
   }
 
   try {
-    // ENDPOINT 1: Open-Meteo Geocoding API (fetch up to 25 candidates to filter by state/territory)
+    // ENDPOINT 1: Open-Meteo Geocoding API
     const geoResponse = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=25&format=json`
     );
     const geoData = await geoResponse.json();
 
     if (!geoData.results || geoData.results.length === 0) {
-      showFlaggedMessage(`City "${city}" not found. Please use the format: City, State.`);
+      showFlaggedMessage(`City "${city}" not found. Please, specify a state or territory.`);
       return;
     }
 
@@ -89,7 +91,7 @@ async function fetchWeather(rawQuery) {
     });
 
     if (!matchedLocation) {
-      showFlaggedMessage(`Could not find "${city}" in "${rawState}". Please, specify a state or territory.`);
+      showFlaggedMessage(`No match for "${city}, ${rawState}". Please, specify a state or territory.`);
       return;
     }
 
@@ -103,7 +105,6 @@ async function fetchWeather(rawQuery) {
 
     appData.weather = weatherData.current_weather;
 
-    // Show navigation tabs and render current view
     endpointNav.style.display = 'flex';
     renderView();
 
@@ -146,19 +147,17 @@ function renderView() {
         <h3>${formattedTitle}</h3>
         <div class="temperature">${temp.toFixed(1)}${unit}</div>
         <p>Wind Speed: <strong>${appData.weather.windspeed} km/h</strong></p>
-        <button class="toggle-btn" id="toggle-unit-btn">Switch to ${appData.isFahrenheit ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</button>
+        <button class="toggle-btn" id="toggle-unit-btn" type="button">Switch to ${appData.isFahrenheit ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</button>
         <p style="color: #739e9e; font-size: 0.8em; margin-top: 15px;">Source: Open-Meteo Forecast API</p>
       </div>
     `;
 
-    // Attach event listener for the unit toggle button
     document.getElementById('toggle-unit-btn').addEventListener('click', () => {
       appData.isFahrenheit = !appData.isFahrenheit;
       renderView();
     });
   }
 
-  // Update active tab styling
   navTabs.forEach(tab => {
     if (tab.getAttribute('data-view') === appData.currentView) {
       tab.classList.add('active');
