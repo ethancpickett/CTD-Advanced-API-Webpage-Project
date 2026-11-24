@@ -10,7 +10,8 @@ let appData = {
   location: null,
   weather: null,
   currentView: 'location', // 'location' or 'weather'
-  isFahrenheit: false
+  isFahrenheit: false,
+  isMph: false
 };
 
 // US State & Territory Abbreviation Lookup
@@ -134,26 +135,42 @@ function renderView() {
     `;
   } else if (appData.currentView === 'weather') {
     let temp = appData.weather.temperature;
-    let unit = '°C';
+    let tempUnit = '°C';
 
     if (appData.isFahrenheit) {
       temp = (temp * 9/5) + 32;
-      unit = '°F';
+      tempUnit = '°F';
+    }
+
+    let wind = appData.weather.windspeed;
+    let windUnit = 'km/h';
+
+    if (appData.isMph) {
+      wind = wind * 0.621371;
+      windUnit = 'mph';
     }
 
     viewContainer.innerHTML = `
       <div class="card">
         <h2 style="color: #7fffd4; margin-top: 0;">🌤️ Weather Endpoint</h2>
         <h3>${formattedTitle}</h3>
-        <div class="temperature">${temp.toFixed(1)}${unit}</div>
-        <p>Wind Speed: <strong>${appData.weather.windspeed} km/h</strong></p>
-        <button class="toggle-btn" id="toggle-unit-btn" type="button">Switch to ${appData.isFahrenheit ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</button>
+        <div class="temperature">${temp.toFixed(1)}${tempUnit}</div>
+        <p>Wind Speed: <strong>${wind.toFixed(1)} ${windUnit}</strong></p>
+        <div class="toggle-group">
+          <button class="toggle-btn" id="toggle-unit-btn" type="button">Switch to ${appData.isFahrenheit ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</button>
+          <button class="toggle-btn" id="toggle-wind-btn" type="button">Switch to ${appData.isMph ? 'km/h' : 'mph'}</button>
+        </div>
         <p style="color: #739e9e; font-size: 0.8em; margin-top: 15px;">Source: Open-Meteo Forecast API</p>
       </div>
     `;
 
     document.getElementById('toggle-unit-btn').addEventListener('click', () => {
       appData.isFahrenheit = !appData.isFahrenheit;
+      renderView();
+    });
+
+    document.getElementById('toggle-wind-btn').addEventListener('click', () => {
+      appData.isMph = !appData.isMph;
       renderView();
     });
   }
