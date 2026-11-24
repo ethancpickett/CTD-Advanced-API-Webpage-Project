@@ -136,11 +136,18 @@ button:hover {
   font-weight: bold;
 }
 
+.toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
 .toggle-btn {
   background-color: #005c5c;
   color: #7fffd4;
   border: 1px solid #7fffd4;
-  margin-top: 15px;
   padding: 6px 12px;
   font-size: 0.85em;
   border-radius: 4px;
